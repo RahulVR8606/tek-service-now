@@ -13,3 +13,6 @@ files/_sessions/
 
 # Or ignore all log files
 *.log
+
+/public/web.config
+/config/config_db.php 
