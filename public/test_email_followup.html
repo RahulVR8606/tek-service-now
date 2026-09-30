@@ -1,0 +1,17 @@
+<html><body>
+<script>
+// This is a diagnostic test to check if openNotifyModal is accessible
+// from a module script context
+</script>
+<script type="module">
+// In ES modules, we should still be able to access global scope functions
+// Let's test this
+console.log("Module test - typeof openNotifyModal:", typeof openNotifyModal);
+console.log("Module test - typeof window.openNotifyModal:", typeof window.openNotifyModal);
+</script>
+<script>
+function openNotifyModal() {
+    console.log("openNotifyModal called!");
+}
+</script>
+</body></html>
