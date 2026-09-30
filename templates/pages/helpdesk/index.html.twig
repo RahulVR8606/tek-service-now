@@ -112,37 +112,47 @@
                         {# Actually, only FormTile does not provide translations because its title and description are already translated in the form itself #}
                         {% set is_tile_provide_translations = tile is instanceof('Glpi\\ItemTranslation\\Context\\ProvideTranslationsInterface') %}
 
-                        <div class="col-12 col-sm-6 col-md-4 d-flex">
-                            <a
-                                class="card mx-1 my-2 flex-grow-1"
-                                href="{{ tile.getTileUrl() }}"
-                            >
-                                <section class="card-body">
-                                    <div class="d-flex">
-                                        <div class="aspect-ratio-1">
-                                            {{ render_illustration(tile.getIllustration(), 70) }}
-                                        </div>
-                                        <div class="ms-4">
-                                            <h2 class="card-title mb-2 text-break">
-                                                {% if is_tile_provide_translations %}
-                                                    {{ translate_helpdesk_item_key(tile, constant('TRANSLATION_KEY_TITLE', tile)) }}
-                                                {% else %}
-                                                    {{ tile.getTitle() }}
-                                                {% endif %}
-                                            </h2>
-                                            <div class="text-secondary remove-last-tinymce-margin">
-                                                {# If the tile provides translations, use the translation handler to get the description #}
-                                                {% if is_tile_provide_translations %}
-                                                    {{ translate_helpdesk_item_key(tile, constant('TRANSLATION_KEY_DESCRIPTION', tile))|safe_html }}
-                                                {% else %}
-                                                    {{ tile.getDescription()|safe_html }}
-                                                {% endif %}
+                        {% set tile_title = '' %}
+                        {% if is_tile_provide_translations %}
+                            {% set tile_title = translate_helpdesk_item_key(tile, constant('TRANSLATION_KEY_TITLE', tile)) %}
+                        {% else %}
+                            {% set tile_title = tile.getTitle() %}
+                        {% endif %}
+
+                        {% if 'reservation' not in tile_title|lower and 'faq' not in tile_title|lower %}
+                            {% set col_class = "col-12 col-sm-6 col-md-4" %}
+                            {% if 'issue' in tile_title|lower or 'service' in tile_title|lower %}
+                                {% set col_class = "col-12 col-sm-12 col-md-6" %}
+                            {% endif %}
+
+                            <div class="{{ col_class }} d-flex">
+                                <a
+                                    class="card mx-1 my-2 flex-grow-1"
+                                    href="{{ tile.getTileUrl() }}"
+                                >
+                                    <section class="card-body">
+                                        <div class="d-flex">
+                                            <div class="aspect-ratio-1">
+                                                {{ render_illustration(tile.getIllustration(), 70) }}
+                                            </div>
+                                            <div class="ms-4">
+                                                <h2 class="card-title mb-2 text-break">
+                                                    {{ tile_title }}
+                                                </h2>
+                                                <div class="text-secondary remove-last-tinymce-margin">
+                                                    {# If the tile provides translations, use the translation handler to get the description #}
+                                                    {% if is_tile_provide_translations %}
+                                                        {{ translate_helpdesk_item_key(tile, constant('TRANSLATION_KEY_DESCRIPTION', tile))|safe_html }}
+                                                    {% else %}
+                                                        {{ tile.getDescription()|safe_html }}
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </section>
-                            </a>
-                        </div>
+                                    </section>
+                                </a>
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>

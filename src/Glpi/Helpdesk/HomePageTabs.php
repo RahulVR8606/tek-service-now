@@ -74,41 +74,10 @@ final class HomePageTabs extends CommonGLPI
 
         $tabs = [
             self::ONGOING_TICKETS_TAB => self::createTabEntry(
-                text: __('Ongoing tickets'),
+                text: __('Top 10 Created Tickets'),
                 icon: Ticket::getIcon()
-            ),
-            self::SOLVED_TICKETS_TAB  => self::createTabEntry(
-                text: __('Solved tickets'),
-                icon: 'ti ti-check'
-            ),
+            )
         ];
-
-        if (
-            Session::haveRight("reminder_public", READ)
-            && Reminder::countPublicReminders() > 0
-        ) {
-            $tabs[self::PUBLIC_REMINDER_TAB] = self::createTabEntry(
-                text: Reminder::getTypeName(),
-                icon: Reminder::getIcon()
-            );
-        }
-
-        if (
-            Session::haveRight("rssfeed_public", READ)
-            && RSSFeed::countPublicRssFedds() > 0
-        ) {
-            $tabs[self::RSS_FEED_PUBLIC] = self::createTabEntry(
-                text: RSSFeed::getTypeName(),
-                icon: RSSFeed::getIcon()
-            );
-        }
-
-        if (Grid::canViewOneDashboard()) {
-            $tabs[self::DASHBOARD_TAB] = self::createTabEntry(
-                text: __("Dashboard"),
-                icon: Dashboard::getIcon()
-            );
-        }
 
         return $tabs;
     }
@@ -171,14 +140,7 @@ final class HomePageTabs extends CommonGLPI
 
     private function displayOngoingTicketsTabs(): void
     {
-        $this->showTicketList([
-            [
-                'link'       => 'AND',
-                'field'      => 12,
-                'searchtype' => 'equals',
-                'value'      => 'notold',
-            ],
-        ]);
+        $this->showTicketList([]);
     }
 
     private function displaySolvedTicketsTabs(): void
@@ -202,8 +164,10 @@ final class HomePageTabs extends CommonGLPI
             'hide_controls'      => true,
             'as_map'             => false,
             'push_history'       => false,
-            'sort'               => [19],
+            'sort'               => [15],
             'order'              => ['DESC'],
+            'start'              => 0,
+            'list_limit'         => 10,
         ]);
         echo '</div>';
     }
