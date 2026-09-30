@@ -402,18 +402,18 @@
 
         // intercept event for edit notification button
         document.addEventListener('click', event => {
-            if (event.target.closest("#actor_{{ rand }} + .select2 .edit-notify-user")) {
-                return openNotifyModal(event);
+            if (event.target.closest(".edit-notify-user")) {
+                return window.openNotifyModal(event);
             }
             // if a click on assign info is detected prevent opening of select2
-            if (event.target.closest("#actor_{{ rand }} + .select2 .assign_infos")) {
+            if (event.target.closest(".assign_infos")) {
                 event.stopPropagation();
             }
         }, {capture: true})
         document.addEventListener('keydown', event => {
-            if (event.target.closest("#actor_{{ rand }} + .select2 .edit-notify-user")
+            if (event.target.closest(".edit-notify-user")
                 && event.key == "Enter") {
-                return openNotifyModal(event);
+                return window.openNotifyModal(event);
             }
         }, {capture: true})
 

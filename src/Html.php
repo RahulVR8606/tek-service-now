@@ -1274,7 +1274,7 @@ TWIG,
             'helpdesk' => [
                 'title' => __('Assistance'),
                 'types' => [
-                    'Ticket', ServiceCatalog::class, 'Problem', 'Change',
+                    'Ticket', 'Problem', 'Change',
                     'Planning', 'Stat', 'TicketRecurrent', 'RecurrentChange',
                 ],
                 'icon'    => 'ti ti-headset',
@@ -1299,8 +1299,8 @@ TWIG,
                 'title' => __('Tools'),
                 'types' => [
                     'Project', 'Reminder', 'RSSFeed', 'KnowbaseItem',
-                    'ReservationItem', 'Report',
-                    'SavedSearch', 'Impact',
+                    'Report',
+                    'Impact',
                 ],
                 'icon' => 'ti ti-briefcase',
             ],
@@ -1486,13 +1486,7 @@ TWIG,
             throw new RuntimeException("Cant load current entity");
         }
 
-        if ($entity->isServiceCatalogEnabled()) {
-            $menu['create_ticket'] = [
-                'default' => ServiceCatalog::getSearchURL(false),
-                'title'   => __('Service catalog'),
-                'icon'    => 'ti ti-brand-telegram',
-            ];
-        }
+        // Service catalog menu entry removed as requested
 
         if (
             Session::haveRight("ticket", READ)
@@ -1517,13 +1511,7 @@ TWIG,
             }
         }
 
-        if (Session::haveRightsOr("reservation", [READ, ReservationItem::RESERVEANITEM])) {
-            $menu['reservation'] = [
-                'default' => '/front/reservationitem.php',
-                'title'   => _n('Reservation', 'Reservations', Session::getPluralNumber()),
-                'icon'    => ReservationItem::getIcon(),
-            ];
-        }
+        // Reservation menu entry removed as requested
 
         if (Session::haveRight('knowbase', KnowbaseItem::READFAQ)) {
             $menu['faq'] = [
@@ -3557,6 +3545,7 @@ JS;
         ];
         if ($enable_images) {
             $plugins[] = 'image';
+            $plugins[] = 'media';
             $plugins[] = 'glpi_upload_doc';
         }
         if ($DB->use_utf8mb4) {
@@ -3645,7 +3634,7 @@ JS;
                     menubar: false,
                     toolbar_location: '{$toolbar_location}',
                     toolbar: {$toolbar} && richtext_layout == 'classic'
-                        ? 'styles | bold italic | forecolor backcolor | bullist numlist outdent indent | emoticons table link image | code fullscreen'
+                        ? 'styles | bold italic | forecolor backcolor | bullist numlist outdent indent | emoticons table link image media | code fullscreen'
                         : false,
                     quickbars_insert_toolbar: richtext_layout == 'inline'
                         ? 'emoticons quicktable quickimage quicklink | bullist numlist | outdent indent '
@@ -3655,7 +3644,7 @@ JS;
                         : false,
                     contextmenu: richtext_layout == 'classic'
                         ? false
-                        : 'copy paste | emoticons table image link | undo redo | code fullscreen',
+                        : 'copy paste | emoticons table image media link | undo redo | code fullscreen',
 
                     // Status bar configuration
                     statusbar: {$statusbar},
@@ -3666,6 +3655,79 @@ JS;
                     readonly: {$readonlyjs},
                     relative_urls: false,
                     remove_script_host: false,
+
+                    // File picker for uploading images/videos from local drive
+                    file_picker_types: 'image media',
+                    file_picker_callback: function(callback, value, meta) {
+                        var input = document.createElement('input');
+                        input.setAttribute('type', 'file');
+                        if (meta.filetype === 'image') {
+                            input.setAttribute('accept', 'image/*');
+                        } else if (meta.filetype === 'media') {
+                            input.setAttribute('accept', 'video/*');
+                        }
+                        input.addEventListener('change', function() {
+                            var file = this.files[0];
+                            if (!file) return;
+
+                            var activeEditor = tinymce.activeEditor;
+                            var uploaderName = 'filename';
+                            if (activeEditor) {
+                                var editorEl = activeEditor.getElement();
+                                var uploader = $('[data-uploader-name="' + CSS.escape(editorEl.name) + '"]');
+                                if (uploader.length > 0) {
+                                    uploaderName = uploader.data('uploader-name');
+                                }
+                            }
+
+                            var uploadName = uniqid('', true) + file.name;
+                            var renamedFile = new File([file], uploadName, { type: file.type });
+
+                            var formData = new FormData();
+                            formData.append('_uploader_' + uploaderName + '[]', renamedFile, uploadName);
+                            formData.append('name', '_uploader_' + uploaderName);
+                            formData.append('showfilesize', 'true');
+
+                            $.ajax({
+                                url: CFG_GLPI.root_doc + '/ajax/fileupload.php',
+                                type: 'POST',
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                dataType: 'json',
+                                success: function(response) {
+                                    var respKey = '_uploader_' + uploaderName;
+                                    var data = response[respKey];
+                                    if (data && data.length > 0 && !data[0].error) {
+                                        $.ajax({
+                                            url: CFG_GLPI.root_doc + '/ajax/getFileTag.php',
+                                            type: 'POST',
+                                            data: { data: data },
+                                            dataType: 'json',
+                                            success: function(tags) {
+                                                if (tags && tags.length > 0) {
+                                                    var container = activeEditor
+                                                        ? $(activeEditor.getElement()).closest('form').find('[id^="fileupload_info"]').first()
+                                                        : null;
+                                                    if (container && container.length) {
+                                                        displayUploadedFile(data[0], tags[0], activeEditor, uploaderName, container);
+                                                    }
+                                                    var blobUrl = URL.createObjectURL(file);
+                                                    callback(blobUrl, { title: file.name });
+                                                }
+                                            }
+                                        });
+                                    } else if (data && data.length > 0 && data[0].error) {
+                                        alert(data[0].error);
+                                    }
+                                },
+                                error: function(xhr) {
+                                    alert(xhr.statusText || 'Upload failed');
+                                }
+                            });
+                        });
+                        input.click();
+                    },
 
                     // Misc options
                     browser_spellcheck: true,
